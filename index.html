@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Population & Demographic Change | Interactive D3.js Visualization</title>
+  <meta name="description" content="University assignment visualization analyzing global population growth and demographic transitions (1950-2023) using D3.js v7 and UN WPP 2024 data.">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- D3.js v7 CDN with offline local fallback -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>window.d3 || document.write('<script src="js/d3.v7.min.js"><\/script>')</script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- ================================================================
+         1. Header Section
+         ================================================================ -->
+    <header class="header-card">
+      <div class="header-left">
+        <span class="badge">Course: 21CSE423T &bull; Big Data Visualization</span>
+        <h1>Global Population &amp; Demographic Change</h1>
+        <p class="subtitle">Interactive D3.js Visualization (1950 – 2023)</p>
+      </div>
+      <div class="header-right">
+        <span class="meta-pill">Dataset: <strong>UN World Population Prospects (2024)</strong></span>
+        <span class="meta-pill">Scope: <strong>237 Countries &amp; 6 Continents</strong></span>
+      </div>
+    </header>
+
+    <!-- ================================================================
+         2. Filter / Control Section
+         ================================================================ -->
+    <section class="controls-card" aria-label="Visualization Filters and Controls">
+      <!-- Continent Dropdown -->
+      <div class="control-group">
+        <label for="continent-select" class="control-label">Continent</label>
+        <select id="continent-select" class="select-control" aria-label="Filter by continent">
+          <option value="All">All Continents</option>
+        </select>
+      </div>
+
+      <!-- Country Dropdown -->
+      <div class="control-group">
+        <label for="country-select" class="control-label">Country / Territory</label>
+        <select id="country-select" class="select-control" aria-label="Filter by country">
+          <option value="All">All Countries (Top Rankings)</option>
+        </select>
+      </div>
+
+      <!-- Year Slider & Timeline Playback -->
+      <div class="control-group">
+        <div class="control-label">
+          <span>Year</span>
+          <span class="year-badge" id="year-val">2023</span>
+        </div>
+        <div class="slider-container">
+          <button id="play-btn" class="btn btn-secondary" title="Auto-play timeline (1950 - 2023)" aria-label="Play timeline animation">
+            <span id="play-icon">▶</span> <span id="play-text">Play</span>
+          </button>
+          <div class="slider-wrapper">
+            <input type="range" id="year-slider" class="slider-control" min="1950" max="2023" step="1" value="2023" aria-label="Select timeline year">
+            <div class="slider-bounds">
+              <span>1950</span>
+              <span>1985</span>
+              <span>2023</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset Filters Button -->
+      <div class="control-group">
+        <button id="reset-btn" class="btn btn-secondary" title="Reset all filters to default" aria-label="Reset filters">
+          <span>↺</span> Reset Filters
+        </button>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         3. KPI Cards Section
+         ================================================================ -->
+    <section class="kpi-grid" aria-label="Key Performance Indicators">
+      <!-- Total Population -->
+      <article class="kpi-card" id="kpi-total-pop">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Population</span>
+          <span class="kpi-icon">🌍</span>
+        </div>
+        <div class="kpi-value" id="kpi-pop-val">—</div>
+        <div class="kpi-subtext" id="kpi-pop-sub">Global total in selected year</div>
+      </article>
+
+      <!-- Selected Year -->
+      <article class="kpi-card" id="kpi-year">
+        <div class="kpi-header">
+          <span class="kpi-title">Selected Year</span>
+          <span class="kpi-icon">📅</span>
+        </div>
+        <div class="kpi-value" id="kpi-year-val">2023</div>
+        <div class="kpi-subtext" id="kpi-year-sub">Timeline range: 1950 – 2023</div>
+      </article>
+
+      <!-- Largest Age Group -->
+      <article class="kpi-card" id="kpi-age-group">
+        <div class="kpi-header">
+          <span class="kpi-title">Largest Age Group</span>
+          <span class="kpi-icon">👥</span>
+        </div>
+        <div class="kpi-value" id="kpi-age-val">—</div>
+        <div class="kpi-subtext" id="kpi-age-sub">Dominant demographic cohort</div>
+      </article>
+
+      <!-- Demographic Breakdown (Youth, Working, Elderly) -->
+      <article class="kpi-card" id="kpi-breakdown">
+        <div class="kpi-header">
+          <span class="kpi-title">Age Structure Mix</span>
+          <span class="kpi-icon">📊</span>
+        </div>
+        <div class="kpi-value" id="kpi-ratio-val" style="font-size: 1.35rem;">—</div>
+        <div class="prop-bar" id="prop-bar">
+          <div class="prop-segment" id="seg-young" style="background-color: var(--age-under-5); width: 25%;" title="Youth (0-14)"></div>
+          <div class="prop-segment" id="seg-work" style="background-color: var(--age-25-64); width: 65%;" title="Working Age (15-64)"></div>
+          <div class="prop-segment" id="seg-elder" style="background-color: var(--age-65-plus); width: 10%;" title="Elderly (65+)"></div>
+        </div>
+        <div class="prop-legend-mini">
+          <span>👶 0-14: <strong id="pct-young">—</strong></span>
+          <span>💼 15-64: <strong id="pct-work">—</strong></span>
+          <span>👴 65+: <strong id="pct-elder">—</strong></span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================================================================
+         4. Visualizations Grid (Bar Chart & Stacked Area Chart)
+         ================================================================ -->
+    <main class="charts-grid">
+      <!-- Chart 1: Interactive Bar Chart -->
+      <section class="chart-card" aria-label="Population by Country Bar Chart">
+        <div class="chart-header">
+          <div class="chart-title-area">
+            <h2>Population by Country</h2>
+            <p id="bar-subtitle">Top countries ranked by population</p>
+          </div>
+          <div class="chart-tools">
+            <span class="meta-pill" id="bar-view-info">Top 15 Countries</span>
+          </div>
+        </div>
+        <div id="bar-chart" class="chart-svg-container"></div>
+      </section>
+
+      <!-- Chart 2: Stacked Area Chart -->
+      <section class="chart-card" aria-label="Age Distribution Stacked Area Chart">
+        <div class="chart-header">
+          <div class="chart-title-area">
+            <h2>Age Distribution Over Time</h2>
+            <p id="area-subtitle">Demographic transition (1950 – 2023) for <strong id="area-country-name">India</strong></p>
+          </div>
+          <div class="chart-tools">
+            <div class="toggle-group" role="group" aria-label="Chart metric toggle">
+              <button id="toggle-abs" class="toggle-btn active" title="Show absolute population numbers">Absolute</button>
+              <button id="toggle-pct" class="toggle-btn" title="Show percentage share (100% stacked)">Share (%)</button>
+            </div>
+          </div>
+        </div>
+        <div id="area-chart" class="chart-svg-container"></div>
+        <!-- Legend for Age Groups -->
+        <div id="area-legend" class="legend-container" aria-label="Age groups legend"></div>
+      </section>
+    </main>
+
+    <!-- ================================================================
+         5. Dynamic Key Observations & Insights Section
+         ================================================================ -->
+    <section class="observations-card" aria-label="Key Demographic Observations">
+      <div class="observations-header">
+        <h2><span>💡</span> Key Demographic Observations</h2>
+        <p>Dynamically derived analytical findings reflecting the selected filters and timeline position</p>
+      </div>
+      <div class="observations-grid">
+        <div class="obs-box">
+          <div class="obs-title"><span>👑</span> Population Leader</div>
+          <div class="obs-content" id="obs-leader">Loading observations...</div>
+        </div>
+        <div class="obs-box">
+          <div class="obs-title"><span>📈</span> Historical Growth</div>
+          <div class="obs-content" id="obs-growth">Loading observations...</div>
+        </div>
+        <div class="obs-box">
+          <div class="obs-title"><span>⏳</span> Demographic Dividend</div>
+          <div class="obs-content" id="obs-dividend">Loading observations...</div>
+        </div>
+        <div class="obs-box">
+          <div class="obs-title"><span>👴</span> Aging Transition</div>
+          <div class="obs-content" id="obs-aging">Loading observations...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         6. Academic & Viva Quick Reference Card
+         ================================================================ -->
+    <section class="academic-card" aria-label="D3 and Academic Architecture Summary">
+      <div class="academic-col">
+        <h3>D3.js Architecture &amp; Implementation Details</h3>
+        <p>
+          This dashboard employs <strong>D3.js v7</strong> data joins, responsive SVG coordinate mapping, custom interpolations, and synchronized scale transformations. Population aggregates are computed dynamically using <code>d3.rollup()</code> and <code>d3.group()</code> across 87,690 records without external backend dependencies.
+        </p>
+        <div class="academic-tags">
+          <span class="tech-tag">d3.csv()</span>
+          <span class="tech-tag">d3.group()</span>
+          <span class="tech-tag">d3.rollup()</span>
+          <span class="tech-tag">d3.scaleBand()</span>
+          <span class="tech-tag">d3.scaleLinear()</span>
+          <span class="tech-tag">d3.stack()</span>
+          <span class="tech-tag">d3.area()</span>
+          <span class="tech-tag">d3.transition()</span>
+          <span class="tech-tag">Selection.join()</span>
+        </div>
+      </div>
+      <div class="academic-col">
+        <h3>Submission Metadata</h3>
+        <p>
+          <strong>Course:</strong> 21CSE423T (Big Data Visualization)<br>
+          <strong>Dataset:</strong> UN WPP 2024 Revision / OWID<br>
+          <strong>Default Focus:</strong> India (sensible default country)<br>
+          <strong>Stack:</strong> Pure HTML5 &bull; CSS3 &bull; Vanilla JS &bull; D3.js v7
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         7. Footer
+         ================================================================ -->
+    <footer class="dashboard-footer">
+      <p>
+        Developed for Big Data Visualization (21CSE423T) &bull; Demographic data curated from 
+        <a href="https://ourworldindata.org/grapher/population-by-age-group.csv" target="_blank" rel="noopener">Our World in Data</a> 
+        based on UN World Population Prospects (2024 Revision).
+      </p>
+    </footer>
+  </div>
+
+  <!-- Shared Interactive Tooltip -->
+  <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
+
+  <!-- Application Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>
