@@ -82,10 +82,10 @@ Global population expanded from **2.50 billion in 1950** to **8.09 billion in 20
 - **Africa:** Represents the youngest and fastest-growing continental profile. Youth (ages 0–14) comprise **39.4%** of Africa's population in 2023, whereas senior citizens (65+) represent only **3.6%**. Nigeria leads the continent at **227.88 million**.
 - **Europe:** Exhibits structural population stagnation and advanced aging. Several European nations demonstrate a contraction in under-5 cohorts with elderly proportions exceeding **20%**.
 
-### 5.3 Demographic Dividend vs. Super-Aging
-Comparing the demographic transitions of **India** and **Japan** highlights contrasting phases of the demographic transition:
-- **India (Demographic Dividend Phase):** Working-age individuals (15–64) comprise **68.0% (978 million)** of the population in 2023, up from 55% in 1970. This creates an economically advantageous low dependency ratio.
-- **Japan (Super-Aging Phase):** Senior citizens (65+) represent **29.5%** of Japan's population in 2023 (up from 4.9% in 1950), while children under 5 account for less than **4%**, establishing Japan as a classic "super-aged" society under United Nations classification criteria.
+### 5.3 Demographic Dividend vs. Advanced Population Aging
+Comparing the demographic transitions of **India** and **Japan** highlights contrasting phases of cohort distribution:
+- **India (Demographic Dividend Phase):** Working-age individuals (15–64) comprise **68.0% (978 million)** of the population in 2023, up from 55% in 1970. This meets the $\ge 60\%$ analytical threshold indicator used in this visualization to denote an active demographic dividend window.
+- **Japan (Pronounced Population Aging):** Senior citizens (65+) represent **29.5%** of Japan's population in 2023 (up from 4.9% in 1950), while children under 5 account for less than **4%**, reflecting a higher share of older population and a pronounced population aging trend.
 
 ---
 

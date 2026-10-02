@@ -104,7 +104,7 @@
    - Click on the bar for **"Japan"** (or select Japan from dropdown).
    - Click the **"Share (%)"** toggle on the area chart.
    - Show Japan's demographic transition: the red 65+ cohort dramatically expands to 29.5%, while the blue under-5 cohort shrinks to under 4%.
-   - Point to the **Key Observations** card dynamically reporting: *"classifying it as an aged society (super-aging) under UN demographic criteria."*
+   - Point to the **Key Observations** card dynamically reporting: *"indicating a higher share of older population."*
 5. **Interactive Legend & Tooltips:**
    - Hover over the **"Ages 65+"** legend item to highlight that layer while dimming the others.
    - Hover across the area chart to demonstrate the crosshair and multi-cohort tooltip.

@@ -510,22 +510,21 @@ function updateKPIs() {
   const workCount = ageTotals['15-24'] + ageTotals['25-64'];
   const elderCount = ageTotals['65+'];
 
-  const youngPct = totalPop > 0 ? (youngCount / totalPop) * 100 : 0;
-  const workPct = totalPop > 0 ? (workCount / totalPop) * 100 : 0;
-  const elderPct = totalPop > 0 ? (elderCount / totalPop) * 100 : 0;
+  const [youngPctStr, workPctStr, elderPctStr] = roundPercentages([youngCount, workCount, elderCount], 100, 1);
+  const workRatioDisplay = Math.round(parseFloat(workPctStr));
 
-  document.getElementById('kpi-ratio-val').textContent = `${workPct.toFixed(0)}% Working Age`;
-  document.getElementById('pct-young').textContent = `${youngPct.toFixed(1)}%`;
-  document.getElementById('pct-work').textContent = `${workPct.toFixed(1)}%`;
-  document.getElementById('pct-elder').textContent = `${elderPct.toFixed(1)}%`;
+  document.getElementById('kpi-ratio-val').textContent = `${workRatioDisplay}% Working Age`;
+  document.getElementById('pct-young').textContent = `${youngPctStr}%`;
+  document.getElementById('pct-work').textContent = `${workPctStr}%`;
+  document.getElementById('pct-elder').textContent = `${elderPctStr}%`;
 
   const segYoung = document.getElementById('seg-young');
   const segWork = document.getElementById('seg-work');
   const segElder = document.getElementById('seg-elder');
   if (segYoung && segWork && segElder) {
-    segYoung.style.width = `${youngPct}%`;
-    segWork.style.width = `${workPct}%`;
-    segElder.style.width = `${elderPct}%`;
+    segYoung.style.width = `${youngPctStr}%`;
+    segWork.style.width = `${workPctStr}%`;
+    segElder.style.width = `${elderPctStr}%`;
   }
 }
 
@@ -678,7 +677,7 @@ function updateBarChart(skipTransition = false) {
       const html = `
         <div class="tooltip-title">${d.country}</div>
         <div class="tooltip-row"><span>Continent:</span><strong>${d.continent}</strong></div>
-        <div class="tooltip-row"><span>Year:</span><strong>${selectedYear}</strong></div>
+        <div class="tooltip-row"><span>Timeline Year:</span><strong>${selectedYear}</strong></div>
         <div class="tooltip-row"><span>Population:</span><strong>${formatPopulation(d.population)}</strong></div>
         <div class="tooltip-row"><span>Relative to Leader:</span><strong>${shareOfTotal}%</strong></div>
         <div style="font-size:0.75rem;color:#94a3b8;margin-top:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
@@ -926,11 +925,15 @@ function updateAreaChart(skipTransition = false) {
         .attr('x2', posX)
         .style('opacity', 1);
 
-      // Tooltip HTML content
+      // Tooltip HTML content with exact rounded percentages summing to 100%
+      const cohortLabels = CONFIG.ageGroups.slice().reverse();
+      const cohortCounts = cohortLabels.map(grp => datum[grp] || 0);
+      const cohortPcts = roundPercentages(cohortCounts, 100, 1);
+
       let rowsHtml = '';
-      CONFIG.ageGroups.slice().reverse().forEach(grp => {
-        const count = datum[grp] || 0;
-        const pct = datum.total > 0 ? ((count / datum.total) * 100).toFixed(1) : 0;
+      cohortLabels.forEach((grp, idx) => {
+        const count = cohortCounts[idx];
+        const pct = cohortPcts[idx];
         rowsHtml += `
           <div class="tooltip-row">
             <span><span class="tooltip-badge" style="background:${CONFIG.ageColors[grp]}"></span>${grp}:</span>
@@ -940,14 +943,22 @@ function updateAreaChart(skipTransition = false) {
       });
 
       const tooltipContent = `
-        <div class="tooltip-title">${targetCountry} &bull; ${datum.year}</div>
+        <div class="tooltip-title">${targetCountry}</div>
+        <div class="tooltip-row" style="margin-bottom:3px;">
+          <span>Hover Year:</span>
+          <strong style="color:#38bdf8;">${datum.year}</strong>
+        </div>
+        <div class="tooltip-row" style="margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:4px;">
+          <span>Timeline Slider:</span>
+          <strong>${state.selectedYear}</strong>
+        </div>
         <div class="tooltip-row" style="margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px;">
-          <span>Total Population:</span>
+          <span>Total Population (${datum.year}):</span>
           <strong>${formatPopulation(datum.total)}</strong>
         </div>
         ${rowsHtml}
         <div style="font-size:0.74rem;color:#94a3b8;margin-top:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
-          👉 Click to jump year slider to ${datum.year}
+          👉 Click to jump timeline slider to ${datum.year}
         </div>
       `;
       showTooltip(tooltipContent, event);
@@ -1033,10 +1044,15 @@ function updateObservations() {
   const leaderElem = document.getElementById('obs-leader');
   if (topCountry && leaderElem) {
     const share = regionTotal > 0 ? ((topCountry.total / regionTotal) * 100).toFixed(1) : 0;
-    const regionName = selectedContinent === 'All' ? 'the world' : selectedContinent;
+    const isGlobal = selectedContinent === 'All';
+    const regionName = isGlobal ? 'the world' : selectedContinent;
+    const sharePhrase = isGlobal 
+      ? `${share}% of the global population` 
+      : `${share}% of the selected continent's population`;
+
     leaderElem.innerHTML = `
       <strong>${topCountry.country}</strong> is the most populous nation in ${regionName} in ${selectedYear}, 
-      with a population of <strong>${formatCompact(topCountry.total)}</strong> (${share}% of the regional total).
+      with a population of <strong>${formatCompact(topCountry.total)}</strong> (${sharePhrase}).
     `;
   }
 
@@ -1067,11 +1083,14 @@ function updateObservations() {
     const workAge = (current['15-24'] || 0) + (current['25-64'] || 0);
     const workPct = current.total > 0 ? ((workAge / current.total) * 100).toFixed(1) : 0;
     const isDividend = workPct >= 60;
+    const dividendNote = isDividend
+      ? 'meeting the &ge;60% analytical indicator used in this visualization to denote an active demographic dividend window.'
+      : 'reflecting a shifting age dependency balance based on the analytical indicator used in this visualization.';
 
     dividendElem.innerHTML = `
       In ${selectedYear}, working-age individuals (15–64) constitute <strong>${workPct}%</strong> 
       (${formatCompact(workAge)}) of <strong>${targetCountry}</strong>'s population, 
-      ${isDividend ? 'signifying an active <em>demographic dividend</em> window.' : 'indicating a shifting age dependency balance.'}
+      ${dividendNote}
     `;
   }
 
@@ -1083,16 +1102,17 @@ function updateObservations() {
     const elderlyCurrentPct = current.total > 0 ? ((current['65+'] / current.total) * 100).toFixed(1) : 0;
     const elderlyInitialPct = initial.total > 0 ? ((initial['65+'] / initial.total) * 100).toFixed(1) : 0;
 
-    let agingStatus = 'youth-oriented';
-    if (elderlyCurrentPct >= 14) agingStatus = 'aged society (super-aging)';
-    else if (elderlyCurrentPct >= 7) agingStatus = 'aging society';
-
-    const article = (agingStatus === 'aged society (super-aging)' || agingStatus === 'aging society') ? 'an' : 'a';
+    let agingDescription = 'a relatively young population structure';
+    if (elderlyCurrentPct >= 14) {
+      agingDescription = 'a higher share of older population';
+    } else if (elderlyCurrentPct >= 7) {
+      agingDescription = 'a population aging trend';
+    }
 
     agingElem.innerHTML = `
       The senior cohort (65+) in <strong>${targetCountry}</strong> represents 
-      <strong>${elderlyCurrentPct}%</strong> in ${selectedYear} (vs ${elderlyInitialPct}% in 1950), 
-      classifying it as ${article} <strong>${agingStatus}</strong> under UN demographic criteria.
+      <strong>${elderlyCurrentPct}%</strong> in ${selectedYear} (compared to ${elderlyInitialPct}% in 1950), 
+      indicating <strong>${agingDescription}</strong>.
     `;
   }
 }
@@ -1120,6 +1140,27 @@ function formatCompact(num) {
   return num.toString();
 }
 
+function roundPercentages(values, targetSum = 100, decimals = 1) {
+  const factor = Math.pow(10, decimals);
+  const targetScaled = Math.round(targetSum * factor);
+  
+  const total = values.reduce((a, b) => a + b, 0);
+  if (total === 0) return values.map(() => (0).toFixed(decimals));
+
+  const scaled = values.map(v => (v / total) * targetSum * factor);
+  const floored = scaled.map(Math.floor);
+  let remainder = targetScaled - floored.reduce((a, b) => a + b, 0);
+
+  const diffs = scaled.map((s, i) => ({ index: i, diff: s - floored[i] }));
+  diffs.sort((a, b) => b.diff - a.diff);
+
+  for (let i = 0; i < remainder; i++) {
+    floored[diffs[i].index]++;
+  }
+
+  return floored.map(f => (f / factor).toFixed(decimals));
+}
+
 function debounce(func, wait) {
   let timeout;
   return function(...args) {
@@ -1127,3 +1168,4 @@ function debounce(func, wait) {
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
+

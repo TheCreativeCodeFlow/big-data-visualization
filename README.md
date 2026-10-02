@@ -26,8 +26,7 @@ This project satisfies the coursework requirements for **21CSE423T: Big Data Vis
 ## 3. Project Objectives
 - **Data Engineering:** Preprocess multi-cohort UN population records into an indexed, normalized format with accurate ISO country-to-continent regional mappings.
 - **Interactive Multi-View Coordination:** Synchronize a responsive horizontal bar chart, a multi-layer stacked area chart, and summary KPI cards.
-- **D3.js Methodological Rigor:** Apply core D3.js concepts including scale transformations (`scaleBand`, `scaleLinear`), stack generators (`d3.stack`), area generators (`d3.area`), animated transitions (`d3.transition`), and dynamic rollup aggregations (`d3.rollup`, `d3.group`).
-- **Academically Defensible Analysis:** Dynamically generate factual observations without hardcoded statistics, demonstrating demographic transitions (youth-oriented, dividend windows, and super-aging societies).
+- **Academically Defensible Analysis:** Dynamically generate factual observations without hardcoded statistics, demonstrating demographic shifts (relatively young population structures, working-age indicators, and population aging trends).
 
 ---
 
@@ -207,7 +206,7 @@ The project includes pre-rendered, high-resolution screenshots generated in head
 3. **[`03_stacked_area_percentage_mode.png`](file:///Users/rahulseervi/Documents/GitHub/big-data-visualization/screenshots/03_stacked_area_percentage_mode.png):**  
    100% normalized demographic transition showing India's working-age expansion from 55% in 1970 to 68% in 2023.
 4. **[`04_country_japan_super_aging.png`](file:///Users/rahulseervi/Documents/GitHub/big-data-visualization/screenshots/04_country_japan_super_aging.png):**  
-   Japan case study showing super-aging transition (65+ cohort reaching 29.5% in 2023 vs 4.9% in 1950).
+   Japan case study showing pronounced population aging trend (65+ cohort reaching 29.5% in 2023 vs 4.9% in 1950).
 5. **[`05_historical_year_1970.png`](file:///Users/rahulseervi/Documents/GitHub/big-data-visualization/screenshots/05_historical_year_1970.png):**  
    Historical 1970 baseline (3.69B world population) with China as the global leader (823.31M).
 
